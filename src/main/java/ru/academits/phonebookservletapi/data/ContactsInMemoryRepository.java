@@ -20,10 +20,7 @@ public class ContactsInMemoryRepository implements ContactsRepository {
             String upperCaseTerm = term.trim().toUpperCase();
 
             return contacts.stream()
-                    .filter(contact ->
-                            contact.getSurname().toUpperCase().contains(upperCaseTerm) ||
-                                    contact.getName().toUpperCase().contains(upperCaseTerm) ||
-                                    contact.getPhone().toUpperCase().contains(upperCaseTerm))
+                    .filter(contact -> getFullContactString(contact).contains(upperCaseTerm))
                     .map(Contact::new)
                     .toList();
         }
@@ -41,7 +38,7 @@ public class ContactsInMemoryRepository implements ContactsRepository {
     public void update(Contact contact) {
         synchronized (contacts) {
             Contact repositoryContact = contacts.stream()
-                    .filter(it -> it.getId() == contact.getId())
+                    .filter(c -> c.getId() == contact.getId())
                     .findFirst()
                     .orElse(null);
 
@@ -75,5 +72,9 @@ public class ContactsInMemoryRepository implements ContactsRepository {
                     .anyMatch(contact ->
                             contact.getId() != contactId && contact.getPhone().toUpperCase().equals(upperCasePhone));
         }
+    }
+
+    private String getFullContactString(Contact contact) {
+        return (contact.getSurname() + " " + contact.getName() + " " + contact.getPhone()).toUpperCase();
     }
 }

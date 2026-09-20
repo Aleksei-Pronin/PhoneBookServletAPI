@@ -20,45 +20,45 @@ public class PhoneBookServlet extends HttpServlet {
     private final ObjectMapper mapper = JsonMapper.builder().build();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String term = request.getParameter("term");
-        sendJson(response, contactsRepository.getAll(term));
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String term = req.getParameter("term");
+        sendJson(resp, contactsRepository.getAll(term));
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Contact contact = readContact(request, response);
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Contact contact = readContact(req, resp);
 
         if (contact == null) {
             return;
         }
 
         if (contactsRepository.isPhoneExists(contact.getPhone(), 0)) {
-            sendJson(response, createResponse(false, "Уже есть контакт с таким номером"));
+            sendJson(resp, createResponse(false, "Уже есть контакт с таким номером"));
             return;
         }
 
         contactsRepository.create(contact);
 
-        sendJson(response, createResponse(true, null));
+        sendJson(resp, createResponse(true, null));
     }
 
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Integer id = getContactId(request, response);
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Integer id = getContactId(req, resp);
 
         if (id == null) {
             return;
         }
 
-        Contact contact = readContact(request, response);
+        Contact contact = readContact(req, resp);
 
         if (contact == null) {
             return;
         }
 
         if (contactsRepository.isPhoneExists(contact.getPhone(), id)) {
-            sendJson(response, createResponse(false, "Уже есть другой контакт с таким номером"));
+            sendJson(resp, createResponse(false, "Уже есть другой контакт с таким номером"));
             return;
         }
 
@@ -66,16 +66,16 @@ public class PhoneBookServlet extends HttpServlet {
         try {
             contactsRepository.update(contact);
         } catch (IllegalArgumentException e) {
-            sendJson(response, createResponse(false, e.getMessage()));
+            sendJson(resp, createResponse(false, e.getMessage()));
             return;
         }
 
-        sendJson(response, createResponse(true, null));
+        sendJson(resp, createResponse(true, null));
     }
 
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Integer id = getContactId(request, response);
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        Integer id = getContactId(req, resp);
 
         if (id == null) {
             return;
@@ -84,20 +84,20 @@ public class PhoneBookServlet extends HttpServlet {
         try {
             contactsRepository.delete(id);
         } catch (IllegalArgumentException e) {
-            sendJson(response, createResponse(false, e.getMessage()));
+            sendJson(resp, createResponse(false, e.getMessage()));
             return;
         }
 
-        sendJson(response, createResponse(true, null));
+        sendJson(resp, createResponse(true, null));
     }
 
-    private Contact readContact(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private Contact readContact(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         Contact contact;
 
         try {
-            contact = mapper.readValue(request.getInputStream(), Contact.class);
+            contact = mapper.readValue(req.getInputStream(), Contact.class);
         } catch (IOException e) {
-            sendJson(response, createResponse(false, "Некорректные данные контакта"));
+            sendJson(resp, createResponse(false, "Некорректные данные контакта"));
             return null;
         }
 
@@ -108,7 +108,7 @@ public class PhoneBookServlet extends HttpServlet {
         String validationMessage = validateContact(surname, name, phone);
 
         if (validationMessage != null) {
-            sendJson(response, createResponse(false, validationMessage));
+            sendJson(resp, createResponse(false, validationMessage));
             return null;
         }
 
@@ -139,34 +139,34 @@ public class PhoneBookServlet extends HttpServlet {
         return null;
     }
 
-    private Integer getContactId(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String pathInfo = request.getPathInfo();
+    private Integer getContactId(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pathInfo = req.getPathInfo();
 
         if (pathInfo == null || pathInfo.length() <= 1) {
-            sendJson(response, createResponse(false, "Не указан id контакта"));
+            sendJson(resp, createResponse(false, "Не указан id контакта"));
             return null;
         }
 
         try {
             return Integer.parseInt(pathInfo.substring(1));
         } catch (NumberFormatException e) {
-            sendJson(response, createResponse(false, "Некорректный id контакта"));
+            sendJson(resp, createResponse(false, "Некорректный id контакта"));
             return null;
         }
     }
 
     private Map<String, Object> createResponse(boolean success, String message) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
-        response.put("message", message);
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("success", success);
+        resp.put("message", message);
 
-        return response;
+        return resp;
     }
 
-    private void sendJson(HttpServletResponse response, Object data) throws IOException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
+    private void sendJson(HttpServletResponse resp, Object data) throws IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
 
-        mapper.writeValue(response.getWriter(), data);
+        mapper.writeValue(resp.getWriter(), data);
     }
 }
