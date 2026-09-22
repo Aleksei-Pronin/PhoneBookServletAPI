@@ -174,7 +174,6 @@
 import ContactsService from "../js/contactsService";
 import {Modal} from "bootstrap";
 import Toastify from "toastify-js";
-import "toastify-js/src/toastify.css";
 
 export default {
   data() {
