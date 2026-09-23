@@ -23,4 +23,10 @@ export default class ContactsService {
         return axios.delete(ContactsService.baseUrl + "/" + contactId)
             .then(response => response.data);
     }
+
+    deleteContacts(contactIds) {
+        return axios.delete(ContactsService.baseUrl, {
+            data: contactIds
+        }).then(response => response.data);
+    }
 }

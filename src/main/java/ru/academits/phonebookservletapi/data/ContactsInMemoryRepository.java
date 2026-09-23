@@ -64,6 +64,17 @@ public class ContactsInMemoryRepository implements ContactsRepository {
     }
 
     @Override
+    public void delete(List<Integer> contactIds) {
+        synchronized (contacts) {
+            boolean removed = contacts.removeIf(contact -> contactIds.contains(contact.getId()));
+
+            if (!removed) {
+                throw new IllegalArgumentException("Контакты не найдены");
+            }
+        }
+    }
+
+    @Override
     public boolean isPhoneExists(String phone, int contactId) {
         String upperCasePhone = phone.toUpperCase();
 

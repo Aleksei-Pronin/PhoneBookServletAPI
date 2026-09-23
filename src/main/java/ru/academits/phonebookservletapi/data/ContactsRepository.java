@@ -11,5 +11,7 @@ public interface ContactsRepository {
 
     void delete(int contactId);
 
+    void delete(List<Integer> contactIds);
+
     boolean isPhoneExists(String phone, int contactId);
 }

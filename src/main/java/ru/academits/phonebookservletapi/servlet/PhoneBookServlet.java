@@ -12,6 +12,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @WebServlet("/api/contact/*")
@@ -45,7 +46,14 @@ public class PhoneBookServlet extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        Integer id = getContactId(req, resp);
+        String pathInfo = req.getPathInfo();
+
+        if (pathInfo == null || pathInfo.length() <= 1) {
+            sendJson(resp, createResponse(false, "Не указан id контакта"));
+            return;
+        }
+
+        Integer id = getContactId(pathInfo, resp);
 
         if (id == null) {
             return;
@@ -75,20 +83,30 @@ public class PhoneBookServlet extends HttpServlet {
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        Integer id = getContactId(req, resp);
-
-        if (id == null) {
-            return;
-        }
-
         try {
-            contactsRepository.delete(id);
+            String pathInfo = req.getPathInfo();
+
+            if (pathInfo == null || pathInfo.equals("/")) {
+                List<Integer> contactIds = mapper.readValue(
+                        req.getInputStream(),
+                        mapper.getTypeFactory().constructCollectionType(List.class, Integer.class)
+                );
+
+                contactsRepository.delete(contactIds);
+            } else {
+                Integer id = getContactId(pathInfo, resp);
+
+                if (id == null) {
+                    return;
+                }
+
+                contactsRepository.delete(id);
+            }
+
+            sendJson(resp, createResponse(true, null));
         } catch (IllegalArgumentException e) {
             sendJson(resp, createResponse(false, e.getMessage()));
-            return;
         }
-
-        sendJson(resp, createResponse(true, null));
     }
 
     private Contact readContact(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -139,14 +157,7 @@ public class PhoneBookServlet extends HttpServlet {
         return null;
     }
 
-    private Integer getContactId(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pathInfo = req.getPathInfo();
-
-        if (pathInfo == null || pathInfo.length() <= 1) {
-            sendJson(resp, createResponse(false, "Не указан id контакта"));
-            return null;
-        }
-
+    private Integer getContactId(String pathInfo, HttpServletResponse resp) throws IOException {
         try {
             return Integer.parseInt(pathInfo.substring(1));
         } catch (NumberFormatException e) {
